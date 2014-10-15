@@ -4,11 +4,13 @@
 #include <libxfce4panel/xfce-hvbox.h>
 #include <sys/sysctl.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 #include "defaultoutput.h"
 
 #define ICON "preferences-desktop-sound"
 #define TARGET_SYSCTL "hw.snd.default_unit"
+#define MAX_UNIT_COUNT 100
 
 static const char *icons[] = {
 	"audio-volume-high",
@@ -38,8 +40,17 @@ static int defaultoutput_set_current_unit(int new_default) {
 
 // update
 static void defaultoutput_update_units(DefaultOutputPlugin *defaultoutput) {
-	// TODO: get the total unit count and update pixbufs
-	defaultoutput->unit_count = 2;
+	for (int i=0; i<MAX_UNIT_COUNT; i++) {
+		gchar *devname = g_strdup_printf("/dev/dsp%d", i);
+		struct stat st;
+		int ret = stat(devname, &st);
+		if (ret < 0) {
+			defaultoutput->unit_count = i;
+			return;
+		}
+	}
+	g_warning("DefaultOutputPlugin: too many devices, more than %d", MAX_UNIT_COUNT);
+	defaultoutput->unit_count = MAX_UNIT_COUNT;
 }
 
 static void defaultoutput_update_state(DefaultOutputPlugin *defaultoutput) {
