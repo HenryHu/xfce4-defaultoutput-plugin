@@ -1,0 +1,9 @@
+[Xfce Panel]
+Type=X-XFCE-PanelPlugin
+Encoding=UTF-8
+Name=Default output changer
+Comment=Display and change default sound output device
+Icon=perferences-desktop-sound
+X-XFCE-Module=defaultoutput
+X-XFCE-Internal=false
+X-XFCE-Unique=false
