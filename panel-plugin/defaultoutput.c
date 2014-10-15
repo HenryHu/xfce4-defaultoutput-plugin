@@ -84,11 +84,13 @@ static void defaultoutput_about(XfcePanelPlugin *plugin, gpointer data) {
 static gboolean defaultoutput_button_press(GtkWidget *widget,
 		GdkEventButton *event, DefaultOutputPlugin *defaultoutput) {
 	if (event->type == GDK_BUTTON_PRESS) {
-		defaultoutput->current_unit =
-			(defaultoutput->current_unit + 1) % defaultoutput->unit_count;
-		defaultoutput_set_current_unit(defaultoutput->current_unit);
-		defaultoutput_update_state(defaultoutput);
-		return TRUE;
+		if (event->button == 1) {
+			defaultoutput->current_unit =
+				(defaultoutput->current_unit + 1) % defaultoutput->unit_count;
+			defaultoutput_set_current_unit(defaultoutput->current_unit);
+			defaultoutput_update_state(defaultoutput);
+			return TRUE;
+		}
 	}
 	return FALSE;
 }
@@ -125,6 +127,7 @@ static DefaultOutputPlugin *defaultoutput_new(XfcePanelPlugin *plugin) {
 	defaultoutput->button = gtk_button_new();
 	gtk_container_add(GTK_CONTAINER(plugin), defaultoutput->button);
 	gtk_widget_show(defaultoutput->button);
+	xfce_panel_plugin_add_action_widget(plugin, defaultoutput->button);
 	g_signal_connect(G_OBJECT(defaultoutput->button), "button-press-event",
 			G_CALLBACK(defaultoutput_button_press), defaultoutput);
 
