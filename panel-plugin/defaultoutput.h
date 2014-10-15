@@ -11,6 +11,8 @@ typedef struct {
 	GtkWidget *image;
 
 	int unit_count;
+	int current_unit;
+
 	int piclib_count;
 	GdkPixbuf **pixbufs;
 } DefaultOutputPlugin;

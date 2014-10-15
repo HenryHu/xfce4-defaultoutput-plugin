@@ -28,7 +28,12 @@ static int defaultoutput_get_current_unit() {
 }
 
 static int defaultoutput_set_current_unit(int new_default) {
-	return sysctlbyname(TARGET_SYSCTL, NULL, NULL, &new_default, sizeof(new_default));
+	char *buf;
+	asprintf(&buf, "sudo sysctl %s=%d", TARGET_SYSCTL, new_default);
+	int ret = system(buf);
+	free(buf);
+	return ret;
+//	return sysctlbyname(TARGET_SYSCTL, NULL, NULL, &new_default, sizeof(new_default));
 }
 
 // update
@@ -46,6 +51,7 @@ static void defaultoutput_update_state(DefaultOutputPlugin *defaultoutput) {
 		return;
 	}
 	assert(current_unit < defaultoutput->unit_count);
+	defaultoutput->current_unit = current_unit;
 
 	GdkPixbuf *pixbuf = defaultoutput->pixbufs[current_unit];
 	xfce_panel_image_set_from_pixbuf(XFCE_PANEL_IMAGE(defaultoutput->image),
@@ -74,11 +80,24 @@ static void defaultoutput_about(XfcePanelPlugin *plugin, gpointer data) {
 	if (icon) g_object_unref(G_OBJECT(icon));
 }
 
+// events
+static gboolean defaultoutput_button_press(GtkWidget *widget,
+		GdkEventButton *event, DefaultOutputPlugin *defaultoutput) {
+	if (event->type == GDK_BUTTON_PRESS) {
+		defaultoutput->current_unit =
+			(defaultoutput->current_unit + 1) % defaultoutput->unit_count;
+		defaultoutput_set_current_unit(defaultoutput->current_unit);
+		defaultoutput_update_state(defaultoutput);
+		return TRUE;
+	}
+	return FALSE;
+}
+
 // size changed
 static gboolean defaultoutput_size_changed(XfcePanelPlugin *plugin,
 		gint size, DefaultOutputPlugin *defaultoutput) {
 
-	gtk_container_set_border_width(GTK_CONTAINER(defaultoutput->ebox), 1);
+//	gtk_container_set_border_width(GTK_CONTAINER(defaultoutput->ebox), 1);
 	gtk_widget_set_size_request(GTK_WIDGET(defaultoutput->image), 32, 32);
 	return TRUE;
 }
@@ -99,13 +118,15 @@ static DefaultOutputPlugin *defaultoutput_new(XfcePanelPlugin *plugin) {
 				NULL, 32);
 	}
 
-	defaultoutput->ebox = gtk_event_box_new();
+/*	defaultoutput->ebox = gtk_event_box_new();
 	gtk_container_add(GTK_CONTAINER(plugin), defaultoutput->ebox);
-	gtk_widget_show(defaultoutput->ebox);
+	gtk_widget_show(defaultoutput->ebox);*/
 
 	defaultoutput->button = gtk_button_new();
-	gtk_container_add(GTK_CONTAINER(defaultoutput->ebox), defaultoutput->button);
+	gtk_container_add(GTK_CONTAINER(plugin), defaultoutput->button);
 	gtk_widget_show(defaultoutput->button);
+	g_signal_connect(G_OBJECT(defaultoutput->button), "button-press-event",
+			G_CALLBACK(defaultoutput_button_press), defaultoutput);
 
 	defaultoutput->image = xfce_panel_image_new ();
 	gtk_container_add(GTK_CONTAINER(defaultoutput->button), defaultoutput->image);
@@ -129,7 +150,7 @@ static void defaultoutput_free(XfcePanelPlugin *plugin,
 		g_object_unref(G_OBJECT(defaultoutput->pixbufs[i]));
 	}
 	free(defaultoutput->pixbufs);
-	gtk_widget_destroy(defaultoutput->ebox);
+//	gtk_widget_destroy(defaultoutput->ebox);
 	panel_slice_free(DefaultOutputPlugin, defaultoutput);
 }
 
