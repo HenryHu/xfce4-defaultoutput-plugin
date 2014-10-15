@@ -64,7 +64,8 @@ static void defaultoutput_update_state(DefaultOutputPlugin *defaultoutput) {
 	assert(current_unit < defaultoutput->unit_count);
 	defaultoutput->current_unit = current_unit;
 
-	GdkPixbuf *pixbuf = defaultoutput->pixbufs[current_unit];
+	GdkPixbuf *pixbuf =
+		defaultoutput->pixbufs[current_unit % defaultoutput->piclib_count];
 	xfce_panel_image_set_from_pixbuf(XFCE_PANEL_IMAGE(defaultoutput->image),
 			pixbuf);
 
